@@ -1,1 +1,1 @@
-hello from feature-C branch
+hello from feature-A feature-B branch
