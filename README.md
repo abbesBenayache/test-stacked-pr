@@ -13,7 +13,14 @@ Découper un gros changement en plusieurs revues indépendantes est un problème
 1. **La PR monolithique.** Une branche qui vit plusieurs semaines, puis une revue de plusieurs milliers de lignes d'un coup — fatigue de revue, régressions qui passent entre les mailles, feedback trop tardif pour être actionnable.
 2. **L'empilement manuel.** Des équipes outillées (Meta, Google, ou via des produits tiers comme Phabricator ou Graphite) pratiquaient déjà le découpage séquentiel — PR B basée sur PR A — mais sans support natif : chaque merge du bas de la pile imposait de retargeter, rebaser et force-pusher manuellement tout ce qui se trouvait au-dessus. Sur une pile de cinq PR, une seule étape oubliée cassait toute la chaîne.
 
-   Exemple sur une pile à 3 niveaux (`auth-api` → `auth-ui` → `auth-tests`), après merge de `auth-api` dans `main` :
+   Exemple sur une pile à 3 niveaux, après merge de `auth-api` dans `main` :
+
+   ```text
+   main
+    └── feat/auth-api      (PR-1 → main)              ajoute login()
+         └── feat/auth-ui       (PR-2 → feat/auth-api)     appelle login()
+              └── feat/auth-tests   (PR-3 → feat/auth-ui)       teste l'UI
+   ```
 
    ```bash
    gh pr edit auth-ui --base main          # 1. retarget manuel
@@ -28,6 +35,14 @@ GitHub a intégré cette mécanique nativement pour automatiser la partie pureme
 ### Mécanique interne
 
 Une pull request n'est qu'une comparaison entre deux pointeurs : `head` (ce qui est proposé) et `base` (la cible d'intégration). Rien n'impose que `base` soit `main` — c'est exactement ce que fait un stacking : la PR du haut prend pour `base` la branche de la PR du bas, au lieu de `main`.
+
+```text
+AVANT le merge de PR-1                 APRÈS le merge de PR-1
+main                                    main
+ └── feature-1  ← base de PR-2           ├─(feature-1 fusionné ici)
+      └── feature-2 (PR-2)                └── feature-2 (PR-2)
+                                               base retargetée automatiquement : feature-1 → main
+```
 
 Séquence exacte capturée via `gh api .../timeline` sur ce repo, quand la PR du bas (base=`main`) est mergée alors que la PR du haut (base=`feature/feature-1`) est encore ouverte :
 
