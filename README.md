@@ -13,6 +13,16 @@ Découper un gros changement en plusieurs revues indépendantes est un problème
 1. **La PR monolithique.** Une branche qui vit plusieurs semaines, puis une revue de plusieurs milliers de lignes d'un coup — fatigue de revue, régressions qui passent entre les mailles, feedback trop tardif pour être actionnable.
 2. **L'empilement manuel.** Des équipes outillées (Meta, Google, ou via des produits tiers comme Phabricator ou Graphite) pratiquaient déjà le découpage séquentiel — PR B basée sur PR A — mais sans support natif : chaque merge du bas de la pile imposait de retargeter, rebaser et force-pusher manuellement tout ce qui se trouvait au-dessus. Sur une pile de cinq PR, une seule étape oubliée cassait toute la chaîne.
 
+   Exemple sur une pile à 3 niveaux (`auth-api` → `auth-ui` → `auth-tests`), après merge de `auth-api` dans `main` :
+
+   ```bash
+   gh pr edit auth-ui --base main          # 1. retarget manuel
+   git checkout auth-ui && git rebase main && git push --force-with-lease   # 2. rebase manuel (nouveaux SHA)
+   git checkout auth-tests && git rebase auth-ui && git push --force-with-lease   # 3. répercuter en cascade
+   ```
+
+   Oublier l'étape 3 laisse `auth-tests` pointer sur les anciens SHA de `auth-ui` : son diff affiche alors des changements déjà mergés ailleurs, sans lien évident avec la cause racine. C'est précisément ce que le stacking natif automatise (`automatic_base_change_succeeded` + `head_ref_force_pushed`, propagés en cascade).
+
 GitHub a intégré cette mécanique nativement pour automatiser la partie purement opérationnelle — retargeting et rebase — et laisser l'attention humaine sur ce qui a réellement de la valeur : la revue.
 
 ### Mécanique interne
