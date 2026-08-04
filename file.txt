@@ -1,1 +1,1 @@
-EXO3: v1 par A
+EXO3: v2 empilée sur A
