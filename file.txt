@@ -1,1 +1,1 @@
-EXO1: B utilise la fondation de A
+EXO3: modif concurrente d'un collègue
