@@ -1,1 +1,1 @@
-hello from feature-A feature-B branch
+EXO1: B utilise la fondation de A
